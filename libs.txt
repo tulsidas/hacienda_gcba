@@ -2,6 +2,7 @@ commons-codec-1.6.jar
 commons-logging-1.1.1.jar
 dom4j-1.6.1.jar
 fluent-hc-4.2.5.jar
+guava-14.0.1.jar
 httpclient-4.2.5.jar
 httpclient-cache-4.2.5.jar
 httpcore-4.2.4.jar

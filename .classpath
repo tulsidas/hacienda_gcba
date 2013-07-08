@@ -9,5 +9,6 @@
 	<classpathentry kind="lib" path="lib/jtidy-r938.jar"/>
 	<classpathentry kind="lib" path="lib/httpcore-4.2.4.jar"/>
 	<classpathentry kind="lib" path="lib/commons-logging-1.1.1.jar"/>
+	<classpathentry kind="lib" path="lib/guava-14.0.1.jar"/>
 	<classpathentry kind="output" path=""/>
 </classpath>
