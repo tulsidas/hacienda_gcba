@@ -2,31 +2,55 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 
+import javax.sql.DataSource;
+
+import jdbchelper.JdbcHelper;
+import jdbchelper.SimpleDataSource;
+
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.params.BasicHttpParams;
+import org.apache.http.params.HttpConnectionParams;
+import org.apache.http.params.HttpParams;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import com.google.common.io.ByteStreams;
-import com.google.common.io.Files;
 import com.google.common.primitives.Ints;
 
 public class Hacienda {
 	final String detalleUrl = "http://www.buenosaires.gob.ar/areas/hacienda/compras/consulta/popup_detalle.php?popup_modulo=popup_altas_detalle&estado=6&idlicitacion=%d&tipo=adjudicacion";
+	final JdbcHelper jdbc;
+
+	public Hacienda() {
+		DataSource dataSource = new SimpleDataSource(
+				"org.hsqldb.jdbc.JDBCDriver", "jdbc:hsqldb:file:db/testdb",
+				"sa", "");
+		jdbc = new JdbcHelper(dataSource);
+	}
 
 	public static void main(String[] args) throws Exception {
-		for (int i = 0; i < 46000; i += 100) {
-			parseHtml(i);
+		new Hacienda().parse();
+	}
+
+	public void parse() {
+		try {
+			for (int i = 0; i < 46000; i += 100) {
+				parseHtml(i);
+			}
+		} catch (Exception e) {
+			if (jdbc != null) {
+				jdbc.execute("shutdown");
+			}
 		}
 	}
 
-	private static void parseHtml(int num) throws Exception {
-
+	private void parseHtml(int num) throws Exception {
 		Document doc = Jsoup.parse(new File(num + ".html"), "iso-8859-1");
 
 		Elements trs = doc.select("table.lista > tbody > tr");
@@ -44,9 +68,9 @@ public class Hacienda {
 
 			String href = spans.get(7).getElementsByTag("a").first()
 					.attr("href");
-			String idlicitacion = href.substring(
+			int idlicitacion = Ints.tryParse(href.substring(
 					href.indexOf("idlicitacion=") + "idlicitacion=".length())
-					.trim();
+					.trim());
 
 			System.out.println("contratacion = " + contratacion);
 			System.out.println("actuacion = " + actuacion);
@@ -58,17 +82,24 @@ public class Hacienda {
 			System.out.println("idlicitacion = " + idlicitacion);
 			System.out.println("...................");
 
-			parseDetails(Ints.tryParse(idlicitacion));
-			System.exit(1);
+			// id, contratacion, actuacion, rubro, fecha, solicitante,
+			// licitante, estado, filebajado
+			jdbc.execute(
+					"insert into licitacion (id, contratacion, actuacion, rubro, fecha, solicitante, licitante, estado, filebajado) "
+							+ "values (?, ?, ?, ?, ?, ?, ?, ?, false)",
+					idlicitacion, contratacion, actuacion, rubro, fecha,
+					rSolicitante, rLicitante, estado);
+
+			parseDetails(idlicitacion);
 		}
 	}
 
-	public static void parseDetails(int idlicitacion) throws Exception {
+	private void parseDetails(int idlicitacion) throws Exception {
 		System.out.println("parseando licitacion " + idlicitacion + "...");
 		Document doc = null;
 		String uri = "http://www.buenosaires.gob.ar/areas/hacienda/compras/consulta/popup_detalle.php?popup_modulo=popup_altas_detalle&estado=6&idlicitacion=109748&tipo=adjudicacion";
-		HttpGet get = new HttpGet(uri);
 		HttpClient client = new DefaultHttpClient();
+		HttpGet get = new HttpGet(uri);
 		HttpResponse response = client.execute(get);
 		HttpEntity entity = response.getEntity();
 		if (entity != null) {
@@ -109,14 +140,20 @@ public class Hacienda {
 		System.out.println("bajando adjudicacion...");
 
 		// FIXME darle un timeout a esto
-		HttpGet fileGet = new HttpGet(fullLink);
-		HttpResponse fileResponse = client.execute(fileGet);
-		HttpEntity fileEntity = fileResponse.getEntity();
+		HttpParams params = new BasicHttpParams();
+		HttpConnectionParams.setConnectionTimeout(params, 5000);
+		HttpConnectionParams.setSoTimeout(params, 5000);
+
+		client = new DefaultHttpClient(params);
+		get = new HttpGet(fullLink);
+		response = client.execute(get);
+		entity = response.getEntity();
 		if (entity != null) {
-			InputStream instream = fileEntity.getContent();
+			InputStream instream = entity.getContent();
 			try {
 				ByteStreams.copy(instream, new FileOutputStream(new File(
 						"down/" + fileName)));
+				System.out.println("bajado " + fileName);
 			} finally {
 				instream.close();
 			}
