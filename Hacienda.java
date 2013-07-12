@@ -1,10 +1,13 @@
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
+import java.net.SocketException;
 
 import javax.sql.DataSource;
 
 import jdbchelper.JdbcHelper;
+import jdbchelper.QueryResult;
 import jdbchelper.SimpleDataSource;
 
 import org.apache.http.HttpEntity;
@@ -27,15 +30,13 @@ public class Hacienda {
 	final String detalleUrl = "http://www.buenosaires.gob.ar/areas/hacienda/compras/consulta/popup_detalle.php?popup_modulo=popup_altas_detalle&estado=6&idlicitacion=%d&tipo=adjudicacion";
 	final JdbcHelper jdbc;
 
+	static final String FILES_DIR = "down/";
+
 	public Hacienda() {
 		DataSource dataSource = new SimpleDataSource(
 				"org.hsqldb.jdbc.JDBCDriver", "jdbc:hsqldb:file:db/testdb",
 				"sa", "");
 		jdbc = new JdbcHelper(dataSource);
-	}
-
-	public static void main(String[] args) throws Exception {
-		new Hacienda().parse();
 	}
 
 	public void parse() {
@@ -47,11 +48,14 @@ public class Hacienda {
 			if (jdbc != null) {
 				jdbc.execute("shutdown");
 			}
+
+			e.printStackTrace();
 		}
 	}
 
 	private void parseHtml(int num) throws Exception {
-		Document doc = Jsoup.parse(new File(num + ".html"), "iso-8859-1");
+		Document doc = Jsoup.parse(new File("htmls/" + num + ".html"),
+				"iso-8859-1");
 
 		Elements trs = doc.select("table.lista > tbody > tr");
 
@@ -72,29 +76,45 @@ public class Hacienda {
 					href.indexOf("idlicitacion=") + "idlicitacion=".length())
 					.trim());
 
-			System.out.println("contratacion = " + contratacion);
-			System.out.println("actuacion = " + actuacion);
-			System.out.println("rubro = " + rubro);
-			System.out.println("fecha = " + fecha);
-			System.out.println("rSolicitante = " + rSolicitante);
-			System.out.println("rLicitante = " + rLicitante);
-			System.out.println("estado = " + estado);
-			System.out.println("idlicitacion = " + idlicitacion);
-			System.out.println("...................");
+			QueryResult res = jdbc.query(
+					"select * from licitacion where id = ?", idlicitacion);
+
+			boolean existeRegistro = res.next();
+			boolean existeDetalle = existeRegistro
+					&& res.getString("empresa") != null;
+			boolean existeArchivo = existeRegistro
+					&& res.getString("archivo") != null;
+			String link = existeDetalle ? res.getString("link") : null;
 
 			// id, contratacion, actuacion, rubro, fecha, solicitante,
-			// licitante, estado, filebajado
-			jdbc.execute(
-					"insert into licitacion (id, contratacion, actuacion, rubro, fecha, solicitante, licitante, estado, filebajado) "
-							+ "values (?, ?, ?, ?, ?, ?, ?, ?, false)",
-					idlicitacion, contratacion, actuacion, rubro, fecha,
-					rSolicitante, rLicitante, estado);
+			// licitante, estado, link, archivo, observaciones,
+			// empresa
 
-			parseDetails(idlicitacion);
+			if (!existeRegistro) {
+				jdbc.execute(
+						"insert into licitacion (id, contratacion, actuacion, rubro, fecha, solicitante, licitante, estado) "
+								+ "values (?, ?, ?, ?, ?, ?, ?, ?)",
+						idlicitacion, contratacion, actuacion, rubro, fecha,
+						rSolicitante, rLicitante, estado);
+			}
+
+			if (!existeDetalle) {
+				link = parseDetails(idlicitacion);
+				bajar(idlicitacion, link);
+			}
+
+			if (!existeArchivo) {
+				bajar(idlicitacion, link);
+			}
+
+			res.close();
 		}
 	}
 
-	private void parseDetails(int idlicitacion) throws Exception {
+	/**
+	 * parsea y devuelve el link de la licitacion adjudicada
+	 */
+	private String parseDetails(int idlicitacion) throws Exception {
 		System.out.println("parseando licitacion " + idlicitacion + "...");
 		Document doc = null;
 		String uri = "http://www.buenosaires.gob.ar/areas/hacienda/compras/consulta/popup_detalle.php?popup_modulo=popup_altas_detalle&estado=6&idlicitacion=109748&tipo=adjudicacion";
@@ -117,46 +137,65 @@ public class Hacienda {
 
 		Elements tds = table.select("tr > td");
 
-		System.out.println("observaciones = " + tds.get(13).text());
+		String observaciones = tds.get(13).text();
 
 		String link = table
 				.getElementsByAttributeValueContaining("href", "109748")
 				.first().attr("href");
-		System.out.println("link = " + link);
 
-		Element empresa = table
+		Element empresaElem = table
 				.getElementsByAttributeValueContaining("src",
 						"http://estatico.buenosaires.gov.ar/images/cuad.gif")
 				.first().parent();
 
-		System.out.println("empresa = " + empresa.text());
-
-		String fileName = link.substring(link.lastIndexOf("/") + 1);
-
-		System.out.println("fileName = " + fileName);
+		String empresa = empresaElem.text();
 
 		String fullLink = "http://www.buenosaires.gob.ar" + link;
 
-		System.out.println("bajando adjudicacion...");
+		jdbc.execute(
+				"update licitacion set link = ?, observaciones = ?, empresa = ? where id = ?",
+				fullLink, observaciones, empresa, idlicitacion);
 
-		// FIXME darle un timeout a esto
+		return fullLink;
+	}
+
+	private void bajar(int idlicitacion, String link) throws IOException {
+		System.out.println("bajando archivo: " + link);
+
+		String archivo = link.substring(link.lastIndexOf("/") + 1);
+
 		HttpParams params = new BasicHttpParams();
 		HttpConnectionParams.setConnectionTimeout(params, 5000);
 		HttpConnectionParams.setSoTimeout(params, 5000);
 
-		client = new DefaultHttpClient(params);
-		get = new HttpGet(fullLink);
-		response = client.execute(get);
-		entity = response.getEntity();
-		if (entity != null) {
-			InputStream instream = entity.getContent();
+		HttpClient client = new DefaultHttpClient(params);
+		HttpGet get = new HttpGet(link);
+
+		for (int i = 0; i < 5; i++) {
 			try {
-				ByteStreams.copy(instream, new FileOutputStream(new File(
-						"down/" + fileName)));
-				System.out.println("bajado " + fileName);
-			} finally {
-				instream.close();
+				HttpResponse response = client.execute(get);
+				HttpEntity entity = response.getEntity();
+				if (entity != null) {
+					InputStream instream = entity.getContent();
+					try {
+						ByteStreams.copy(instream, new FileOutputStream(
+								new File(FILES_DIR + archivo)));
+
+						jdbc.execute(
+								"update licitacion set archivo = ? where id = ?",
+								archivo, idlicitacion);
+						break;
+					} finally {
+						instream.close();
+					}
+				}
+			} catch (SocketException se) {
+				System.out.println("reintentando " + (i + 1) + " - " + se.getMessage());
 			}
 		}
+	}
+
+	public static void main(String[] args) throws Exception {
+		new Hacienda().parse();
 	}
 }
