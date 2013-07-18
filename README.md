@@ -44,11 +44,38 @@ Este paso fue un mero tecnicismo, ya que el link de donde se encuentra el archiv
 #### Paso 5: Exportar la base de datos como un archivo .csv
 Hasta ahora toda la información era guardada en una [base de datos embebida] [4], para prepararla para el paso 6 hubo que transformar los ~46k registros en un [archivo separado por comas] [5]
 
+#### Paso 6: Refinar la información
+El paso más importante (y más difícil) de todos. Tener los registros no alcanza, son muchos, y es muy largo y tedioso intentar hacer cualquier análisis sobre él.
+En este paso se usó la excelente herramienta [OpenRefine] [6], que permite, entre muchísimas otras cosas, limpiar información "sucia".
+
+Concretamente, la mayor limpieza fue dada en las empresas. Por ejemplo, algunos registros indicaban que la empresa adjudicada era *Ernesto Van Rossum y Cía S.R.L.*, mientras que otros indicaban *Ernesto Van Rossum y CIA SRL* o *Ernesto Van Rossum y Cía SRL*
+
+A primera vista parece que no hay diferencias entre los 3 casos, pero viendo de cerca en un caso dice **S.R.L.** y en otro **SRL**, y otras diferencias sutiles. Esto es casi imperceptible para una persona, pero una computadora trata los 3 items como si fueran 3 distintos, y si quisieramos saber cuántas adjudicaciones tuvo una empresa, no incluiría en los resultados aquellas que no tienen exactamente el mismo nombre.
+
+Por suerte [OpenRefine] [6] detecta estas diferencias sutiles y permite agruparlos bajo el mismo nombre, de forma que sea fácil la agrupación o filtrado.
+
+Este proceso se realizó tanto para empresas como para solicitantes, licitantes y rubros.
+
+#### Paso 7: Open Data
+El paso 7 (aún en proceso) consta(rá) de publicar la información, sea como csv descargable, tanto como proveer un API para aquellos programadores/hackers que quieran usarla y también, sobre todo, una plataforma de visualización que permita ver las licitaciones y, eventualmente, detectar irregularidades.
+
 qué sigue
 ---------
+
+Más allá del paso 7, hay varias cosas por hacer.
+
+El primero y principal es que las licitaciones no tienen, al momento, costo asociado. Con lo hecho actualmente no hay forma fácil de saber si la licitación fue por pocos pesos o por varios millones. Esta información está guardada en los archivos adjuntos de las licitaciones, que por un lado son muchos y muy pesados, y por el otro están en formatos muy disímiles (pdf, word, rtf, zips) lo cual hace muy difícl el procesamiento automático
+
+Por otro lado, no hay un agrupamiento a nivel rubro. Estaría bueno poder ver cuánto se gasta a nivel *salud*, por ejemplo, pero los rubros indican cosas como *Compra de material estéril* y de nuevo, a priori, no hay forma facil de asociar los rubros que están escritos en las licitaciones entre sí.
+
+contacto
+--------
+
+Dudas, consultas, sugerencias o cualquier otro menester, soy ubicable en en twitter: @quixote_arg
 
 [1]: http://www.buenosaires.gob.ar/areas/hacienda/compras/        "Hacienda GCBA"
 [2]: http://en.wikipedia.org/wiki/Bash_(Unix_shell)
 [3]: http://jsoup.org/
 [4]: http://hsqldb.org/
 [5]: http://es.wikipedia.org/wiki/CSV
+[6]: http://openrefine.org/
