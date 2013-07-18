@@ -1,7 +1,11 @@
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.Statement;
 
 import javax.sql.DataSource;
 
@@ -21,6 +25,8 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+
+import au.com.bytecode.opencsv.CSVWriter;
 
 import com.google.common.base.Charsets;
 import com.google.common.io.CharStreams;
@@ -44,14 +50,29 @@ public class Hacienda {
 			for (int i = 46000; i <= 46000; i += 100) {
 				parseHtml(i);
 			}
-
-			jdbc.execute("shutdown");
 		} catch (Exception e) {
-			if (jdbc != null) {
-				jdbc.execute("shutdown");
+			e.printStackTrace();
+		} finally {
+			jdbc.execute("shutdown");
+		}
+	}
+
+	public void parseFaltantes() {
+		System.out.println("parseFaltantes\n");
+		try {
+			QueryResult res = jdbc
+					.query("select * from licitacion where empresa is null");
+
+			while (res.next()) {
+				parseDetails(res.getInt("id"));
 			}
 
+			res.close();
+
+		} catch (Exception e) {
 			e.printStackTrace();
+		} finally {
+			jdbc.execute("shutdown");
 		}
 	}
 
@@ -224,8 +245,9 @@ public class Hacienda {
 					// try-with-resources!
 					// http://docs.oracle.com/javase/tutorial/essential/exceptions/tryResourceClose.html
 					try (InputStream stream = entity.getContent()) {
-						String ret = CharStreams.toString(new InputStreamReader(
-								stream, Charsets.ISO_8859_1));
+						String ret = CharStreams
+								.toString(new InputStreamReader(stream,
+										Charsets.ISO_8859_1));
 						System.out.println();
 						return ret;
 					}
@@ -234,13 +256,37 @@ public class Hacienda {
 				// algo fallo... reintentar
 			}
 		}
-		
+
 		System.out.println("no se pudo");
 
 		return null;
 	}
 
+	public void exportCSV() {
+		System.out.println("exportCSV\n");
+		try {
+
+			try (CSVWriter csv = new CSVWriter(new FileWriter("hacienda.csv"))) {
+				try (Connection conn = jdbc.getConnection()) {
+					try (Statement st = conn.createStatement()) {
+						try (ResultSet rs = st
+								.executeQuery("select * from licitacion")) {
+							csv.writeAll(rs, true);
+						}
+					}
+				}
+			}
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			jdbc.execute("shutdown");
+		}
+	}
+
 	public static void main(String[] args) throws Exception {
-		new Hacienda().parse();
+		// new Hacienda().parse();
+		// new Hacienda().parseFaltantes();
+		new Hacienda().exportCSV();
 	}
 }
