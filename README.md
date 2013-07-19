@@ -71,7 +71,7 @@ Por otro lado, no hay un agrupamiento a nivel rubro. Estaría bueno poder ver cu
 contacto
 --------
 
-Dudas, consultas, sugerencias o cualquier otro menester, soy ubicable en en twitter: @quixote_arg
+Dudas, consultas, sugerencias o cualquier otro menester: tulsidas arroba gmail.com o twitter: @quixote_arg
 
 [1]: http://www.buenosaires.gob.ar/areas/hacienda/compras/        "Hacienda GCBA"
 [2]: http://en.wikipedia.org/wiki/Bash_(Unix_shell)
