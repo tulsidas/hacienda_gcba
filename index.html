@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen" />
+    <link rel="stylesheet" type="text/css" href="stylesheets/pygment_trac.css" media="screen" />
+    <link rel="stylesheet" type="text/css" href="stylesheets/print.css" media="print" />
+
+    <title>Hacienda gcba by tulsidas</title>
+  </head>
+
+  <body>
+
+    <header>
+      <div class="container">
+        <h1>Hacienda gcba</h1>
+        <h2>experimento para parsear los datos de hacienda de GCBA</h2>
+
+        <section id="downloads">
+          <a href="https://github.com/tulsidas/hacienda_gcba/zipball/master" class="btn">Download as .zip</a>
+          <a href="https://github.com/tulsidas/hacienda_gcba/tarball/master" class="btn">Download as .tar.gz</a>
+          <a href="https://github.com/tulsidas/hacienda_gcba" class="btn btn-github"><span class="icon"></span>View on GitHub</a>
+        </section>
+      </div>
+    </header>
+
+    <div class="container">
+      <section id="main_content">
+        <h1>
+<a name="hacienda-gcba" class="anchor" href="#hacienda-gcba"><span class="octicon octicon-link"></span></a>hacienda gcba</h1>
+
+<h2>
+<a name="qu%C3%A9-y-por-qu%C3%A9" class="anchor" href="#qu%C3%A9-y-por-qu%C3%A9"><span class="octicon octicon-link"></span></a>qué y por qué</h2>
+
+<p>Un experimento para parsear los datos de hacienda de GCBA, en particular los que respectan a compras y licitaciones.</p>
+
+<p>En un mundo (o país, o sistema de gobierno) ideal, la transparencia sobre el gasto público sería completa, y podríamos (los ciudadanos) saber exactamente cuánto se gastó y en qué.</p>
+
+<p>El Gobierno de la Ciudad de Buenos Aires publica en <a href="http://www.buenosaires.gob.ar/areas/hacienda/compras/" title="Hacienda GCBA">su sitio web</a> un buscador con las licitaciones adjudicadas, pero los datos no son abiertos y la interfaz no permite mucho que digamos.</p>
+
+<p>El propósito de este proyecto es parsear la información, procesarla y publicarla libremente.</p>
+
+<h2>
+<a name="c%C3%B3mo" class="anchor" href="#c%C3%B3mo"><span class="octicon octicon-link"></span></a>cómo</h2>
+
+<p>El trabajo consistió principalmente en estos pasos </p>
+
+<ol>
+<li>Bajar el listado de licitaciones</li>
+<li>Parsear datos generales de cada licitación</li>
+<li>Bajar y parsear detalles de las licitaciones</li>
+<li>Limpiar la base de datos</li>
+<li>Exportar la base de datos como un archivo .csv</li>
+<li>Refinar la información</li>
+<li>Publicarla (en proceso)</li>
+</ol><p>Detallando:</p>
+
+<h4>
+<a name="paso-1-bajar-el-listado-de-licitaciones" class="anchor" href="#paso-1-bajar-el-listado-de-licitaciones"><span class="octicon octicon-link"></span></a>Paso 1: Bajar el listado de licitaciones</h4>
+
+<p><a href="http://www.buenosaires.gob.ar/areas/hacienda/compras/" title="Hacienda GCBA">El sitio de hacienda</a> tiene un buscador que muestra de a 100 resultados máximo. 
+Por suerte el buscador usa <strong>GET</strong> lo cual expone el número de página que se está accediendo como parámetro web, 
+por lo que el primer paso consistió en escribir un pequeño script en <a href="http://en.wikipedia.org/wiki/Bash_(Unix_shell)">bash</a> que baje las 460 páginas (con 100 resultados cada una) listando las ~46.000 licitaciones adjudicadas. </p>
+
+<h4>
+<a name="paso-2-parsear-datos-generales-de-cada-licitaci%C3%B3n" class="anchor" href="#paso-2-parsear-datos-generales-de-cada-licitaci%C3%B3n"><span class="octicon octicon-link"></span></a>Paso 2: Parsear datos generales de cada licitación</h4>
+
+<p>El segundo paso consistió en tomar la información bajada y parsearla (procesarla) para extraer la infomación de la licitaciones propiamente dichas. El problema es que lo bajado en el paso 1 esta en formato <strong>html</strong>, lo cual bastante molesto para procesar, pero con la imprescindible ayuda de la librería <a href="http://jsoup.org/">jsoup</a> el asunto fue bastante sencillo.</p>
+
+<h4>
+<a name="paso-3-bajar-y-parsear-detalles-de-las-licitaciones" class="anchor" href="#paso-3-bajar-y-parsear-detalles-de-las-licitaciones"><span class="octicon octicon-link"></span></a>Paso 3: Bajar y parsear detalles de las licitaciones</h4>
+
+<p>Un detalle no menor, es que en el listado bajado en el paso 1 había información sobre la licitación (quién la solicitaba, fecha, etc) pero el resto de la información (notablemente qué empresa fue la adjudicada) estaba en <em>otro html</em>, por lo que el paso 3 consistió en bajar los ~46.000 archivos de detalle y parsearlos para obtener la información complementaria </p>
+
+<h4>
+<a name="paso-4-limpiar-la-base-de-datos" class="anchor" href="#paso-4-limpiar-la-base-de-datos"><span class="octicon octicon-link"></span></a>Paso 4: Limpiar la base de datos</h4>
+
+<p>Este paso fue un mero tecnicismo, ya que el link de donde se encuentra el archivo de la adjudicacion varía según licitación, en algunos casos es pdf, en otros zip, en otros doc, etc., el problema consistió en que algunos links eran absolutos (o sea incluían <a href="http://www.buenosaires.gob.ar">http://www.buenosaires.gob.ar</a>) y otros no, el paso 3 asumía que eran todos relativos y agregaba de prepo <a href="http://www.buenosaires.gob.ar">http://www.buenosaires.gob.ar</a>, por lo que hubo que limpiar los que contenían el dominio 2 veces</p>
+
+<h4>
+<a name="paso-5-exportar-la-base-de-datos-como-un-archivo-csv" class="anchor" href="#paso-5-exportar-la-base-de-datos-como-un-archivo-csv"><span class="octicon octicon-link"></span></a>Paso 5: Exportar la base de datos como un archivo .csv</h4>
+
+<p>Hasta ahora toda la información era guardada en una <a href="http://hsqldb.org/">base de datos embebida</a>, para prepararla para el paso 6 hubo que transformar los ~46k registros en un <a href="http://es.wikipedia.org/wiki/CSV">archivo separado por comas</a></p>
+
+<h4>
+<a name="paso-6-refinar-la-informaci%C3%B3n" class="anchor" href="#paso-6-refinar-la-informaci%C3%B3n"><span class="octicon octicon-link"></span></a>Paso 6: Refinar la información</h4>
+
+<p>El paso más importante (y más difícil) de todos. Tener los registros no alcanza, son muchos, y es muy largo y tedioso intentar hacer cualquier análisis sobre él.
+En este paso se usó la excelente herramienta <a href="http://openrefine.org/">OpenRefine</a>, que permite, entre muchísimas otras cosas, limpiar información "sucia".</p>
+
+<p>Concretamente, la mayor limpieza fue dada en las empresas. Por ejemplo, algunos registros indicaban que la empresa adjudicada era <em>Ernesto Van Rossum y Cía S.R.L.</em>, mientras que otros indicaban <em>Ernesto Van Rossum y CIA SRL</em> o <em>Ernesto Van Rossum y Cía SRL</em></p>
+
+<p>A primera vista parece que no hay diferencias entre los 3 casos, pero viendo de cerca en un caso dice <strong>S.R.L.</strong> y en otro <strong>SRL</strong>, y otras diferencias sutiles. Esto es casi imperceptible para una persona, pero una computadora trata los 3 items como si fueran 3 distintos, y si quisieramos saber cuántas adjudicaciones tuvo una empresa, no incluiría en los resultados aquellas que no tienen exactamente el mismo nombre.</p>
+
+<p>Por suerte <a href="http://openrefine.org/">OpenRefine</a> detecta estas diferencias sutiles y permite agruparlos bajo el mismo nombre, de forma que sea fácil la agrupación o filtrado.</p>
+
+<p>Este proceso se realizó tanto para empresas como para solicitantes, licitantes y rubros.</p>
+
+<h4>
+<a name="paso-7-open-data" class="anchor" href="#paso-7-open-data"><span class="octicon octicon-link"></span></a>Paso 7: Open Data</h4>
+
+<p>El paso 7 (aún en proceso) consta(rá) de publicar la información, sea como csv descargable, tanto como proveer un API para aquellos programadores/hackers que quieran usarla y también, sobre todo, una plataforma de visualización que permita ver las licitaciones y, eventualmente, detectar irregularidades.</p>
+
+<h2>
+<a name="qu%C3%A9-sigue" class="anchor" href="#qu%C3%A9-sigue"><span class="octicon octicon-link"></span></a>qué sigue</h2>
+
+<p>Más allá del paso 7, hay varias cosas por hacer.</p>
+
+<p>El primero y principal es que las licitaciones no tienen, al momento, costo asociado. Con lo hecho actualmente no hay forma fácil de saber si la licitación fue por pocos pesos o por varios millones. Esta información está guardada en los archivos adjuntos de las licitaciones, que por un lado son muchos y muy pesados, y por el otro están en formatos muy disímiles (pdf, word, rtf, zips) lo cual hace muy difícl el procesamiento automático</p>
+
+<p>Por otro lado, no hay un agrupamiento a nivel rubro. Estaría bueno poder ver cuánto se gasta a nivel <em>salud</em>, por ejemplo, pero los rubros indican cosas como <em>Compra de material estéril</em> y de nuevo, a priori, no hay forma facil de asociar los rubros que están escritos en las licitaciones entre sí.</p>
+
+<h2>
+<a name="contacto" class="anchor" href="#contacto"><span class="octicon octicon-link"></span></a>contacto</h2>
+
+<p>Dudas, consultas, sugerencias o cualquier otro menester: tulsidas arroba gmail.com o twitter: @quixote_arg</p>
+      </section>
+    </div>
+
+    
+  </body>
+</html>
