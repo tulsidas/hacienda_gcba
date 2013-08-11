@@ -6,16 +6,126 @@
 
     <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen" />
     <link rel="stylesheet" type="text/css" href="stylesheets/pygment_trac.css" media="screen" />
-    <link rel="stylesheet" type="text/css" href="stylesheets/print.css" media="print" />
 
-    <title>Hacienda gcba by tulsidas</title>
+    <script type="text/javascript" src="javascripts/jquery.min.js"></script> <!-- 1.9.1 -->
+    <script type="text/javascript" src="javascripts/highcharts.js"></script> <!-- 3.0.4 -->
+    <script type="text/javascript" src="javascripts/underscore-min.js"></script> <!-- 1.5.1 -->
+    <script type="text/javascript" src="javascripts/empresas.js"></script>
+    <script type="text/javascript">
+      $(function () {
+        var steps = [1, 5, 10, 50, 100, 500, 1000];
+        
+        _.each(steps, function(cant) {
+          var total = _.reduce(_.first(empresas, cant), function(acc, elem) {
+            return acc + elem[1];
+          }, 0);
+          
+          alert(cant + " -> " + total);
+        });
+
+/*
+        $('#container').highcharts({
+            chart: {
+                type: 'area'
+            },
+            title: {
+                text: 'US and USSR nuclear stockpiles'
+            },
+            subtitle: {
+                text: 'Source: <a href="http://thebulletin.metapress.com/content/c4120650912x74k7/fulltext.pdf">'+
+                    'thebulletin.metapress.com</a>'
+            },
+            xAxis: {
+                labels: {
+                    formatter: function() {
+                        return this.value; // clean, unformatted number for year
+                    }
+                }
+            },
+            yAxis: {
+                title: {
+                    text: 'Nuclear weapon states'
+                },
+                labels: {
+                    formatter: function() {
+                        return this.value / 1000 +'k';
+                    }
+                }
+            },
+            tooltip: {
+                pointFormat: '{series.name} produced <b>{point.y:,.0f}</b><br/>warheads in {point.x}'
+            },
+            plotOptions: {
+                area: {
+                    pointStart: 1940,
+                    marker: {
+                        enabled: false,
+                        symbol: 'circle',
+                        radius: 2,
+                        states: {
+                            hover: {
+                                enabled: true
+                            }
+                        }
+                    }
+                }
+            },
+            series: [{
+                name: 'USA',
+                data: [null, null, null, null, null, 6 , 11, 32, 110, 235, 369, 640,
+                    1005, 1436, 2063, 3057, 4618, 6444, 9822, 15468, 20434, 24126,
+                    27387, 29459, 31056, 31982, 32040, 31233, 29224, 27342, 26662,
+                    26956, 27912, 28999, 28965, 27826, 25579, 25722, 24826, 24605,
+                    24304, 23464, 23708, 24099, 24357, 24237, 24401, 24344, 23586,
+                    22380, 21004, 17287, 14747, 13076, 12555, 12144, 11009, 10950,
+                    10871, 10824, 10577, 10527, 10475, 10421, 10358, 10295, 10104 ]
+            }, {
+                name: 'USSR/Russia',
+                data: [null, null, null, null, null, null, null , null , null ,null,
+                5, 25, 50, 120, 150, 200, 426, 660, 869, 1060, 1605, 2471, 3322,
+                4238, 5221, 6129, 7089, 8339, 9399, 10538, 11643, 13092, 14478,
+                15915, 17385, 19055, 21205, 23044, 25393, 27935, 30062, 32049,
+                33952, 35804, 37431, 39197, 45000, 43000, 41000, 39000, 37000,
+                35000, 33000, 31000, 29000, 27000, 25000, 24000, 23000, 22000,
+                21000, 20000, 19000, 18000, 18000, 17000, 16000]
+            }, {
+                type: 'pie',
+                name: 'Total consumption',
+                data: [{
+                    name: 'Jane',
+                    y: 13,
+                    color: Highcharts.getOptions().colors[0] // Jane's color
+                }, {
+                    name: 'John',
+                    y: 23,
+                    color: Highcharts.getOptions().colors[1] // John's color
+                }, {
+                    name: 'Joe',
+                    y: 19,
+                    color: Highcharts.getOptions().colors[2] // Joe's color
+                }],
+                center: [100, 80],
+                size: 100,
+                showInLegend: false,
+                dataLabels: {
+                    enabled: false
+                }
+            }]
+        });
+        */
+    });
+    
+
+		</script>
+
+    <title>Hacienda GCBA by tulsidas</title>
   </head>
 
   <body>
 
     <header>
       <div class="container">
-        <h1>Hacienda gcba</h1>
+        <h1>Hacienda GCBA</h1>
         <h2>experimento para parsear los datos de hacienda de GCBA</h2>
 
         <section id="downloads">
@@ -25,22 +135,24 @@
         </section>
       </div>
     </header>
+    
+    <div id="container" style="min-width: 310px; height: 400px; margin: 0 auto"></div>
 
     <div class="container">
       <section id="main_content">
         <h1>
-<a name="hacienda-gcba" class="anchor" href="#hacienda-gcba"><span class="octicon octicon-link"></span></a>hacienda gcba</h1>
+<a name="hacienda-gcba" class="anchor" href="#hacienda-gcba"><span class="octicon octicon-link"></span></a>Hacienda GCBA</h1>
 
 <h2>
 <a name="qu%C3%A9-y-por-qu%C3%A9" class="anchor" href="#qu%C3%A9-y-por-qu%C3%A9"><span class="octicon octicon-link"></span></a>qué y por qué</h2>
 
-<p>Un experimento para parsear los datos de hacienda de GCBA, en particular los que respectan a compras y licitaciones.</p>
+<p>Un experimento para obtener los datos de hacienda de GCBA, en particular los que respectan a compras y licitaciones.</p>
 
 <p>En un mundo (o país, o sistema de gobierno) ideal, la transparencia sobre el gasto público sería completa, y podríamos (los ciudadanos) saber exactamente cuánto se gastó y en qué.</p>
 
-<p>El Gobierno de la Ciudad de Buenos Aires publica en <a href="http://www.buenosaires.gob.ar/areas/hacienda/compras/" title="Hacienda GCBA">su sitio web</a> un buscador con las licitaciones adjudicadas, pero los datos no son abiertos y la interfaz no permite mucho que digamos.</p>
+<p>El <a href="http://www.buenosaires.gob.ar" title="GCBA">Gobierno de la Ciudad de Buenos Aires</a> publica en <a href="http://www.buenosaires.gob.ar/areas/hacienda/compras/" title="Hacienda GCBA">su sitio web</a> un buscador con las licitaciones adjudicadas, pero los datos no son abiertos y la interfaz no permite mucho que digamos.</p>
 
-<p>El propósito de este proyecto es parsear la información, procesarla y publicarla libremente.</p>
+<p>El propósito de este proyecto es obtener la información, procesarla y publicarla libremente.</p>
 
 <h2>
 <a name="c%C3%B3mo" class="anchor" href="#c%C3%B3mo"><span class="octicon octicon-link"></span></a>cómo</h2>
@@ -49,8 +161,8 @@
 
 <ol>
 <li>Bajar el listado de licitaciones</li>
-<li>Parsear datos generales de cada licitación</li>
-<li>Bajar y parsear detalles de las licitaciones</li>
+<li>Obtener datos generales de cada licitación</li>
+<li>Bajar y procesar detalles de las licitaciones</li>
 <li>Limpiar la base de datos</li>
 <li>Exportar la base de datos como un archivo .csv</li>
 <li>Refinar la información</li>
@@ -65,9 +177,9 @@ Por suerte el buscador usa <strong>GET</strong> lo cual expone el número de pá
 por lo que el primer paso consistió en escribir un pequeño script en <a href="http://en.wikipedia.org/wiki/Bash_(Unix_shell)">bash</a> que baje las 460 páginas (con 100 resultados cada una) listando las ~46.000 licitaciones adjudicadas. </p>
 
 <h4>
-<a name="paso-2-parsear-datos-generales-de-cada-licitaci%C3%B3n" class="anchor" href="#paso-2-parsear-datos-generales-de-cada-licitaci%C3%B3n"><span class="octicon octicon-link"></span></a>Paso 2: Parsear datos generales de cada licitación</h4>
+<a name="paso-2-parsear-datos-generales-de-cada-licitaci%C3%B3n" class="anchor" href="#paso-2-parsear-datos-generales-de-cada-licitaci%C3%B3n"><span class="octicon octicon-link"></span></a>Paso 2: Obtener datos generales de cada licitación</h4>
 
-<p>El segundo paso consistió en tomar la información bajada y parsearla (procesarla) para extraer la infomación de la licitaciones propiamente dichas. El problema es que lo bajado en el paso 1 esta en formato <strong>html</strong>, lo cual bastante molesto para procesar, pero con la imprescindible ayuda de la librería <a href="http://jsoup.org/">jsoup</a> el asunto fue bastante sencillo.</p>
+<p>El segundo paso consistió en tomar lo bajado y parsearlo (procesarlo) para extraer la infomación de la licitaciones propiamente dichas. El problema es que lo bajado en el paso 1 esta en formato <strong>html</strong>, lo cual bastante molesto para procesar, pero con la imprescindible ayuda de la librería <a href="http://jsoup.org/">jsoup</a> el asunto fue bastante sencillo.</p>
 
 <h4>
 <a name="paso-3-bajar-y-parsear-detalles-de-las-licitaciones" class="anchor" href="#paso-3-bajar-y-parsear-detalles-de-las-licitaciones"><span class="octicon octicon-link"></span></a>Paso 3: Bajar y parsear detalles de las licitaciones</h4>
