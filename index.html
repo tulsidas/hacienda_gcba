@@ -14,18 +14,29 @@
     <script type="text/javascript">
       $(function () {
         var steps = [1, 5, 10, 25, 50, 75, 100, 250, 500, 750, 1000, 2000, 3000, empresas.length];
-        
-        _.each(steps, function(cant) {
-          var total = _.reduce(_.first(empresas, cant), function(acc, elem) {
+				var values = _.map(steps, function(cant) {
+          return _.reduce(_.first(empresas, cant), function(acc, elem) {
             return acc + elem[1];
           }, 0);
-          
-          console.log(cant + " -> " + total);
         });
-        
+
+				var data = _.zip(steps, values);
+				var cur_step = 1;
+				var total_steps = steps.length;
+
+				function getData() {
+					var chart_data = _.first(data, cur_step);
+					//if (cur_step < total_steps - 1) {
+					//	chart_data = chart_data.concat(_.zip(steps.slice(cur_step + 1, cur_step + 2), [null]));
+					//}
+
+					// return [0,0].concat(chart_data);
+					return chart_data;
+				}
+
         $('#container').highcharts({
             chart: {
-                type: 'area'
+                type: 'line'
             },
             title: {
                 text: 'Licitaciones adjudicadas y sus adjudicantes'
@@ -37,28 +48,22 @@
                 title: {
                     text: 'empresas'
                 },
-                labels: {
-                    formatter: function() {
-                        return this.value; // clean, unformatted number for year
-                    }
-                }
+								type: 'linear',
+								tickWidth: 1,
+								//tickPositions: [1, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650]
+								//tickInterval: 20,
+								//tickPixelInterval: 50
             },
             yAxis: {
                 title: {
                     text: 'adjudicaciones'
-                },
-                labels: {
-                    formatter: function() {
-                        return this.value / 1000 +'k';
-                    }
                 }
             },
             tooltip: {
-                pointFormat: '{series.name} produced <b>{point.y:,.0f}</b><br/>warheads in {point.x}'
+                pointFormat: '{point.x} empresa fue adjudicada con {point.y} licitaciones'
             },
             plotOptions: {
                 area: {
-                    pointStart: 1940,
                     marker: {
                         enabled: false,
                         symbol: 'circle',
@@ -72,25 +77,10 @@
                 }
             },
             series: [{
-                data: [
-                  [1, 834],
-                  [5, 3062],
-                  [10, 4837],
-                  [25, 8522],
-                  [50, 12999],
-                  [75, 16423],
-                  [100, 18988],
-                  [250, 27603],
-                  [500, 34238],
-                  [750, 37486],
-                  [1000, 39484],
-                  [2000, 43004],
-                  [3000, 44350],
-                  [4210, 45560]
-                ]
+								data: getData()
             }, {
                 type: 'pie',
-                name: 'Total consumption',
+                name: '% del total',
                 data: [{
                     name: 'Jane',
                     y: 1000,
@@ -108,6 +98,11 @@
                 }
             }]
         });
+
+				$('#butt').click(function() {
+					cur_step = cur_step + 1;
+					$('#container').highcharts().series[0].setData(getData(), true /*redraw*/);
+				});
     });
     
 
@@ -118,6 +113,7 @@
 
   <body>
 
+<!--
     <header>
       <div class="container">
         <h1>Hacienda GCBA</h1>
@@ -130,8 +126,10 @@
         </section>
       </div>
     </header>
+-->
     
     <div id="container" style="min-width: 310px; width: 800px; height: 400px; margin: 0 auto"></div>
+		<button id="butt">--&gt;</button>
 
     <div class="container">
       <section id="main_content">
