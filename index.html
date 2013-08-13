@@ -20,18 +20,37 @@
           }, 0);
         });
 
+        var grand_total = _.last(values);
 				var data = _.zip(steps, values);
 				var cur_step = 1;
 				var total_steps = steps.length;
-
+				
 				function getData() {
-					var chart_data = _.first(data, cur_step);
-					//if (cur_step < total_steps - 1) {
-					//	chart_data = chart_data.concat(_.zip(steps.slice(cur_step + 1, cur_step + 2), [null]));
-					//}
-
-					// return [0,0].concat(chart_data);
-					return chart_data;
+					return _.first(data, cur_step);
+				}
+				
+				function getDataForPie() {
+				  var acc = values[cur_step-1];
+				  var resto = grand_total - values[cur_step-1];
+				  
+				  return [
+				    { 
+				      name: ((acc / grand_total) * 100).toFixed(2) + "%",
+				      y: acc,
+				      sliced: true,
+				      dataLabels: {
+                enabled: true,
+                y: 100,
+                style: {
+                    fontWeight: 'bold'
+                }
+              }
+			      },
+            {
+              name: 'resto',
+              y: resto
+            }
+          ];
 				}
 
         $('#container').highcharts({
@@ -48,60 +67,68 @@
                 title: {
                     text: 'empresas'
                 },
-								type: 'linear',
-								tickWidth: 1,
-								//tickPositions: [1, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650]
-								//tickInterval: 20,
-								//tickPixelInterval: 50
+               type: 'linear',
+               allowDecimals: false,
+               tickWidth: 1,
+               minPadding: 0.05,
+               maxPadding: 0.05               
             },
             yAxis: {
-                title: {
-                    text: 'adjudicaciones'
-                }
+                title: { text: 'adjudicaciones' },
+                labels: {
+                  formatter: function() {
+                    return this.value; // clean, unformatted number
+                  }
+                },
+                allowDecimals: false,
+                min: 0,
+                // max: 50000,
+                startOnTick: false,
+                lineWidth: 5
             },
             tooltip: {
-                pointFormat: '{point.x} empresa fue adjudicada con {point.y} licitaciones'
-            },
-            plotOptions: {
-                area: {
-                    marker: {
-                        enabled: false,
-                        symbol: 'circle',
-                        radius: 2,
-                        states: {
-                            hover: {
-                                enabled: true
-                            }
-                        }
-                    }
+              formatter: function() {
+                if (this.point.name) { // the pie chart
+                  if (this.point.name === 'resto') {
+                    return false;
+                  }
+                  else {
+                    return "<strong>" + steps[cur_step-1] + "</strong> empresa" + (steps[cur_step-1] > 1 ? "s obtuvieron" : " obtuvo") + " el <strong>" + this.point.name + "</strong> de las adjudicaciones";
+                  }
                 }
+                else {
+                  if (this.point.x == 1) {
+                    return '<strong>1</strong> empresa obtuvo <strong>' + this.point.y + '</strong> adjudicaciones';
+                  }
+                  else {
+                    return '<strong>'+ this.point.x + '</strong> empresas obtuvieron <strong>' + this.point.y + '</strong> adjudicaciones';
+                  }
+                }
+              }
             },
-            series: [{
-								data: getData()
-            }, {
+            series: [
+              {
+								data: getData(),
+                showInLegend: false
+              }, {
                 type: 'pie',
                 name: '% del total',
-                data: [{
-                    name: 'Jane',
-                    y: 1000,
-                    color: 'black'
-                }, {
-                    name: 'John',
-                    y: 46000,
-                    color: 'green'
-                }],
-                center: [500, 150],
-                size: 100,
+                data: getDataForPie(),
+                center: [500, 170],
+                size: 120,
                 showInLegend: false,
-                dataLabels: {
-                    enabled: false
-                }
-            }]
+                tooltip: {
+                  enabled: false
+                },
+                dataLabels: { enabled: false }
+              }
+            ]
         });
-
+        
 				$('#butt').click(function() {
 					cur_step = cur_step + 1;
 					$('#container').highcharts().series[0].setData(getData(), true /*redraw*/);
+					$('#container').highcharts().series[1].setData(getDataForPie(), true /*redraw*/);
 				});
     });
     
@@ -113,7 +140,6 @@
 
   <body>
 
-<!--
     <header>
       <div class="container">
         <h1>Hacienda GCBA</h1>
@@ -126,15 +152,13 @@
         </section>
       </div>
     </header>
--->
-    
-    <div id="container" style="min-width: 310px; width: 800px; height: 400px; margin: 0 auto"></div>
-		<button id="butt">--&gt;</button>
 
     <div class="container">
       <section id="main_content">
-        <h1>
-<a name="hacienda-gcba" class="anchor" href="#hacienda-gcba"><span class="octicon octicon-link"></span></a>Hacienda GCBA</h1>
+
+      <div id="container" style="min-width: 310px; width: 800px; height: 400px; margin: 0 auto"></div>
+		  <button id="butt" class="btn">+</button>
+		  <p><small>gráfico mínimamente interactivo que muestra la distribución de adjudicaciones a empresas</small></p>
 
 <h2>
 <a name="qu%C3%A9-y-por-qu%C3%A9" class="anchor" href="#qu%C3%A9-y-por-qu%C3%A9"><span class="octicon octicon-link"></span></a>qué y por qué</h2>
