@@ -24,6 +24,24 @@
 				var data = _.zip(steps, values);
 				var cur_step = 1;
 				var total_steps = steps.length;
+
+				function actualizarTodo() {
+					$("#anterior").toggle(cur_step > 1);
+					$("#siguiente").toggle(cur_step < steps.length);
+
+					$('#container').highcharts().series[0].setData(getData(), true /*redraw*/);
+					$('#container').highcharts().series[1].setData(getDataForPie(), true /*redraw*/);
+
+					var empresas = steps[cur_step-1];
+					var adjudicaciones = values[cur_step-1];
+					var porcentaje = ((adjudicaciones / grand_total) * 100).toFixed(2);
+					var plural = empresas > 1;
+
+					var texto = empresas + " empresa" + (plural ? "s obtuvieron " : " obtuvo ")
+						+ adjudicaciones + " adjudicaciones (" + porcentaje + "% del total)";
+
+					$("#textillo").text(texto);
+				}
 				
 				function getData() {
 					return _.first(data, cur_step);
@@ -124,12 +142,18 @@
               }
             ]
         });
-        
-				$('#butt').click(function() {
-					cur_step = cur_step + 1;
-					$('#container').highcharts().series[0].setData(getData(), true /*redraw*/);
-					$('#container').highcharts().series[1].setData(getDataForPie(), true /*redraw*/);
+
+				$('#anterior').click(function() {
+					cur_step = cur_step - 1;
+					actualizarTodo();					
 				});
+        
+				$('#siguiente').click(function() {
+					cur_step = cur_step + 1;
+					actualizarTodo();
+				});
+
+				actualizarTodo();
     });
     
 
@@ -143,13 +167,9 @@
     <header>
       <div class="container">
         <h1>Hacienda GCBA</h1>
-        <h2>experimento para parsear los datos de hacienda de GCBA</h2>
-
-        <section id="downloads">
-          <a href="https://github.com/tulsidas/hacienda_gcba/zipball/master" class="btn">Download as .zip</a>
-          <a href="https://github.com/tulsidas/hacienda_gcba/tarball/master" class="btn">Download as .tar.gz</a>
-          <a href="https://github.com/tulsidas/hacienda_gcba" class="btn btn-github"><span class="icon"></span>View on GitHub</a>
-        </section>
+        <h2>experimento para parsear los datos de hacienda de GCBA
+					<a href="https://github.com/tulsidas/hacienda_gcba" class="btn btn-github"><span class="icon"></span>View on GitHub</a>
+				</h2>
       </div>
     </header>
 
@@ -157,8 +177,9 @@
       <section id="main_content">
 
       <div id="container" style="min-width: 310px; width: 800px; height: 400px; margin: 0 auto"></div>
-		  <button id="butt" class="btn">+</button>
-		  <p><small>gráfico mínimamente interactivo que muestra la distribución de adjudicaciones a empresas</small></p>
+		  <button id="anterior" class="btn">&lArr;</button>
+			<span id="textillo" style="color:yellow;"></span>
+		  <button id="siguiente" class="btn">&rArr;</button>
 
 <h2>
 <a name="qu%C3%A9-y-por-qu%C3%A9" class="anchor" href="#qu%C3%A9-y-por-qu%C3%A9"><span class="octicon octicon-link"></span></a>qué y por qué</h2>
@@ -247,7 +268,5 @@ En este paso se usó la excelente herramienta <a href="http://openrefine.org/">O
 <p>Dudas, consultas, sugerencias o cualquier otro menester: tulsidas arroba gmail.com o twitter: @quixote_arg</p>
       </section>
     </div>
-
-    
   </body>
 </html>
